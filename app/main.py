@@ -1,39 +1,23 @@
-import os
-from dotenv import load_dotenv
-from app.spotify_helpers import ensure_access_token, search_artist, get_related_artists, get_top_tracks
-from app.visualization_helpers import plot_artist_popularity_interactive, plot_top_tracks_interactive
+from flask import Flask, request, jsonify, render_template
+from app.spotify_helpers import SpotifyAPI
+from app.visualization_helpers import plot_artist_popularity_interactive, plot_album_timeline_interactive
 
-# Load environment variables
-load_dotenv()
+app = Flask(__name__)
+spotify_api = SpotifyAPI()
 
-CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-def main():
-    # Ensure access token is valid
-    ensure_access_token(CLIENT_ID, CLIENT_SECRET)
-
-    # Get user input
-    artist_name = input("Enter the name of an artist: ")
-    artist = search_artist(artist_name)
-
-    if artist:
-        print(f"\nArtist: {artist['name']}")
-        print(f"Popularity: {artist['popularity']}")
-        print(f"Genres: {', '.join(artist['genres'])}")
-        print(f"Followers: {artist['followers']['total']:,}")
-
-        # Fetch related artists
-        related_artists = get_related_artists(artist['id'])
-
-        # Display popularity comparison
-        plot_artist_popularity_interactive(artist['name'], artist['popularity'], related_artists)
-
-        # Fetch and display top tracks
-        top_tracks = get_top_tracks(artist['id'])
-        plot_top_tracks_interactive(artist['name'], top_tracks)
-    else:
-        print("Artist not found!")
+@app.route("/search", methods=["POST"])
+def search_artist():
+    artist_name = request.form["artist_name"]
+    artist = spotify_api.search_artist(artist_name)
+    if not artist:
+        return jsonify({"error": "Artist not found"}), 404
+    related_artists = spotify_api.get_related_artists(artist["id"])
+    fig = plot_artist_popularity_interactive(artist["name"], artist["popularity"], related_artists)
+    return fig.to_html()
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
