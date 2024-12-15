@@ -13,11 +13,19 @@ def home():
 def search_artist():
     artist_name = request.form["artist_name"]
     artist = spotify_api.search_artist(artist_name)
+
     if not artist:
-        return jsonify({"error": "Artist not found"}), 404
+        return render_template("spotify_data.html", artist=None)
+
     related_artists = spotify_api.get_related_artists(artist["id"])
     fig = plot_artist_popularity_interactive(artist["name"], artist["popularity"], related_artists)
-    return fig.to_html()
+
+    return render_template(
+        "spotify_data.html",
+        artist=artist,
+        related_artists=related_artists,
+        fig=fig.to_html()
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
