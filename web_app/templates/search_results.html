@@ -15,6 +15,10 @@
             <p class="card-text">
                 <strong>Popularity:</strong> {{ artist.popularity }}/100
             </p>
+            <p class="card-text">
+                <strong>Spotify Link:</strong> 
+                <a href="{{ artist.uri }}"> {{ artist.uri }}</a>
+            </p>
             
             <a href="{{ url_for('search_routes.search_form') }}" class="btn btn-success">New Search</a>
         </div>

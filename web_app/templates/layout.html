@@ -37,10 +37,9 @@
         https://getbootstrap.com/docs/5.0/components/navbar/
 -->
 {% set nav_links = [
+    ('/search', 'search', 'Search Artists'),
     ('/about', 'about', 'About'),
     ('/hello', 'hello', 'Hello'),
-    ('/search', 'search', 'Search Artists'),
-    ('/albums', 'albums', 'Albums'),
 ] -%}
 <!-- href, page_id, link_text -->
 <!-- path, unique id , title of link-->
@@ -55,7 +54,7 @@
                 -->
                 <i <i class="bi bi-spotify" style="font-size: 1.7rem; color: black;"></i>
                 &nbsp;
-                Spotify Search App
+                <strong>Spotify Search App</strong>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
