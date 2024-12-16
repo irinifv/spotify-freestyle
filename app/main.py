@@ -4,7 +4,13 @@
 # it imports the SpotifyAPI class from spotify_helpers.py and the visualization functions from visualization_helpers.py
 # it also defines the routes for the web application and renders the appropriate templates
 
+import sys
+import os
 from flask import Flask, request, jsonify, render_template
+
+# Add the project root directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app.spotify_helpers import SpotifyAPI
 from app.visualization_helpers import plot_artist_popularity_interactive, plot_album_timeline_interactive
 

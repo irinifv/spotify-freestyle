@@ -1,0 +1,375 @@
+search.html 6:11 AM
+{% extends "bootstrap_5_layout.html" %}
+
+{% set active_page = "search" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mt-4">Spotify Artist Data</h1>
+
+    <!-- Search Form -->
+    <form method="POST" action="/search/results" class="mb-4">
+        <div class="input-group">
+            <!-- input artist name -->
+            <input type="text" name="artist_name" class="form-control" placeholder="Enter artist name" required>
+            <!-- search button -->
+            <button class="btn btn-success" type="submit">Search</button>
+        </div>
+    </form>
+
+    {% if artist %}
+    <!-- Artist Information -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">{{ artist.name }}</h2>
+            <p><strong>Popularity:</strong> {{ artist.popularity }}</p>
+            <p><strong>Followers:</strong> {{ artist.followers.total | number }}</p>
+            <a href="{{ artist.external_urls.spotify }}" target="_blank" class="btn btn-success">View on Spotify</a>
+        </div>
+    </div>
+
+    <!-- Related Artists -->
+    <h3>Related Artists</h3>
+    <div class="row">
+        {% for related_artist in related_artists %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ related_artist.name }}</h5>
+                    <p><strong>Popularity:</strong> {{ related_artist.popularity }}</p>
+                    <a href="{{ related_artist.external_urls.spotify }}" target="_blank" class="btn btn-outline-primary btn-sm">View on Spotify</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Plot -->
+    <h3>Popularity Chart</h3>
+    <div>
+        {{ fig | safe }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+search_results.html 6:13 AM
+{% extends "bootstrap_5_layout.html" %}
+
+{% set active_page = "search_results" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1 class="text-center mt-4">Spotify Artist Data</h1>
+
+    <!-- Search Form -->
+    <!-- <form method="POST" action="{{ url_for('search_routes.search') }}" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="artist_name" class="form-control" placeholder="Enter artist name" required>
+            <button class="btn btn-success" type="submit">Search</button>
+        </div>
+    </form> -->
+
+    {% if artist %}
+    <!-- Artist Information -->
+        <h2>Artist: {{ artist.name }}</h2>
+        <p>Popularity: {{ artist.popularity }}</p>
+        <p>Genres: {{ artist.genres | join(', ') }}</p>
+
+        <h3>Related Artists</h3>
+        <ul>
+            {% for related_artist in related_artists %}
+                <li>{{ related_artist.name }} (Popularity: {{ related_artist.popularity }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No artist found.</p>
+    {% endif %}
+
+    <a href="{{ url_for('search_routes.search') }}">Back to Search</a>
+
+    <!-- <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">{{ artist.name }}</h2>
+            <p><strong>Popularity:</strong> {{ artist.popularity }}</p>
+            <p><strong>Followers:</strong> {{ artist.followers.total | number }}</p>
+            <a href="{{ artist.external_urls.spotify }}" target="_blank" class="btn btn-success">View on Spotify</a>
+        </div>
+    </div> -->
+</div>
+{% endblock %}
+
+
+spotify_helpers.py
+#spotify_helpers.py
+# handles all Spotify API interactions, 
+# including fetching access tokens, searching for artists, and retrieving artist data
+# this class will be used in the source_routes.py file to interact with the Spotify API
+
+import requests
+import base64
+import time
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+# SpotifyAPI class to handle all Spotify API interactions
+class SpotifyAPI:
+    def __init__(self):
+        self.client_id = CLIENT_ID
+        self.client_secret = CLIENT_SECRET
+        self.access_token = None
+        self.token_expiry_time = None
+
+#authenticate and retrieve API token (access token)
+    def get_access_token(self):
+        url = "https://accounts.spotify.com/api/token"
+        headers = {
+            "Authorization": "Basic " + base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
+        }
+        data = {"grant_type": "client_credentials"}
+        response = requests.post(url, headers=headers, data=data)
+        if response.status_code == 200:
+            self.token_expiry_time = time.time() + 3600  # Token valid for 1 hour
+            self.access_token = response.json()["access_token"]
+        else:
+            raise Exception("Error fetching access token:", response.json())
+        
+#ensure that the access token is valid and retrieve a new one if necessary
+    def ensure_access_token(self):
+        if not self.access_token or time.time() >= self.token_expiry_time:
+            self.get_access_token()
+
+#search for an artist by name
+    def search_artist(self, artist_name):
+        self.ensure_access_token()
+        url = "https://api.spotify.com/v1/search"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"q": artist_name, "type": "artist", "limit": 1}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            artists = response.json().get("artists", {}).get("items", [])
+            return artists[0] if artists else None
+        else:
+            raise Exception("Error searching for artist:", response.json())
+
+#fetches an artist's top tracks
+    def get_top_tracks(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"market": "US"}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("tracks", [])
+        else:
+            raise Exception("Error fetching top tracks:", response.json())
+
+#fetches an artist's related artists
+    def get_related_artists(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/related-artists"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("artists", [])
+        else:
+            raise Exception("Error fetching related artists:", response.json())
+
+#fetches all albums by an artist
+    def get_artist_albums(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/albums"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"include_groups": "album", "limit": 50}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("items", [])
+        else:
+            raise Exception("Error fetching albums:", response.json())
+
+#fetches all tracks from an album
+    def get_album_tracks(self, album_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/albums/{album_id}/tracks"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("items", [])
+        else:
+            raise Exception("Error fetching album tracks:", response.json())
+
+#fetches an artist's top tracks
+    def get_top_tracks(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"market": "US"}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("tracks", [])
+        else:
+            raise Exception("Error fetching top tracks:", response.json())
+
+#fetches an artist's related artists
+    def get_related_artists(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/related-artists"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("artists", [])
+        else:
+            raise Exception("Error fetching related artists:", response.json())
+        
+#fetches an artist's albums
+    def get_artist_albums(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/albums"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"include_groups": "album", "limit": 50}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("items", [])
+        else:
+            raise Exception("Error fetching artist albums:", response.json())
+
+
+search_routes.py
+
+# #SEMI OLD CODE
+# from flask import Flask, Blueprint, request, render_template, redirect, flash, url_for
+# from app.spotify_helpers import SpotifyAPI
+
+# # Initialize Flask Blueprint for routes
+# search_routes = Blueprint("search_routes", __name__)
+# spotify_api = SpotifyAPI()
+
+# # Home Route
+# @search_routes.route("/")
+# def home():
+#     """Render the homepage with a link to the search functionality."""
+#     return render_template("home.html")
+
+# # Search Route
+# @search_routes.route("/search", methods=["GET", "POST"])
+# def search():
+#     """Handle search form input and display artist search page."""
+#     if request.method == "POST":
+#         # Retrieve search query from form
+#         search_query = request.form.get("query")
+
+#         if not search_query:
+#             flash("Please enter an artist name to search!", "danger")
+#             return redirect(url_for("search_routes.search"))
+
+#         # Call Spotify API to search for the artist
+#         artist_data = spotify_api.search_artist(search_query)
+
+#         if not artist_data:
+#             flash("No results found for the artist!", "warning")
+#             return redirect(url_for("search_routes.search"))
+
+#         # Pass artist data to results template
+#         return render_template("search_results.html", artist=artist_data)
+
+#     # Render search form
+#     return render_template("search.html")
+
+# # Search Results Route (Optional)
+# @search_routes.route("/search_results")
+# def search_results():
+#     """Render the search results page (used for redirection)."""
+#     # This route might not be necessary depending on how results are passed
+#     return redirect(url_for("search_routes.search"))
+
+
+#OLD CODE
+# from flask import Blueprint, request, render_template, redirect, flash, url_for
+
+# from app.spotify_helpers import SpotifyAPI
+
+# search_routes = Blueprint("search_routes", __name__)
+
+# spotify_api = SpotifyAPI()
+
+# #search for an artist by name
+# @search_routes.route("/search", methods=["GET", "POST"])
+# def search():
+#     """
+#     Handle search functionality.
+#     If POST: process search form input.
+#     If GET: render search page.
+#     """
+#     print("SEARCH route accessed.")
+
+#     if request.method == "POST":
+#         # Extract search query from form
+#         search_query = request.form.get("query")
+#         print("SEARCH QUERY:", search_query)
+
+#         if not search_query:
+#             # Redirect back to the search page if query is missing
+#             flash("Search query cannot be empty!", "danger")
+#             return redirect(url_for("search_routes.search"))
+
+#         try:
+#             artist = spotify_api.search_artist(search_query)
+#             if not artist:
+#                 flash("Artist not found!", "warning")
+#                 return redirect(url_for("search_routes.search"))
+
+#             top_tracks = spotify_api.get_top_tracks(artist["id"])
+#             related_artists = spotify_api.get_related_artists(artist["id"])
+
+#             return render_template(
+#                 "search_results.html",
+#                 artist=artist,
+#                 top_tracks=top_tracks,
+#                 related_artists=related_artists
+#             )
+#         except Exception as e:
+#             flash(f"An error occurred: {str(e)}", "danger")
+#             return redirect(url_for("search_routes.search"))
+
+#     return render_template("search.html")
+
+
+# #artist route
+# @search_routes.route("/artists/<artist_id>", methods=["POST", "GET"])
+# def artist(artist_id):
+#     """
+#     Handle the artist page.
+#     """
+#     print("ARTIST route accessed.")
+
+#     artist = spotify_api.search_artist(artist_id)
+#     if not artist:
+#         flash("Artist not found!", "warning")
+#         return redirect(url_for("search_routes.search"))
+
+#     related_artists = spotify_api.get_related_artists(artist_id)
+#     return render_template("artist.html", artist=artist, related_artists=related_artists)
+
+
+# @search_routes.route("/albums/<artist_id>")
+# def albums(artist_id):
+#     """
+#     Handle the albums page.
+#     """
+#     print("ALBUMS route accessed.")
+
+#     artist = spotify_api.search_artist_by_id(artist_id)
+#     if not artist:
+#         flash("Artist not found!", "warning")
+#         return redirect(url_for("search_routes.search"))
+
+#     albums = spotify_api.get_artist_albums(artist_id)
+#     return render_template("albums.html", artist=artist, albums=albums)
