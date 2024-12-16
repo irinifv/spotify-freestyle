@@ -44,9 +44,10 @@
         ('/about', 'about', 'About'),
         ('/hello', 'hello', 'Hello'),
         ('/search', 'search', 'Search Artists'),
-        ('/search_results', 'search_results', 'Search Results'),
+        ('/search/results', 'search_results', 'Search Results'),
         ('/albums', 'albums', 'Albums'),
     ] -%}
+    <!-- href, page_id, link_text -->
     <!-- path, unique id , title of link-->
     
     {% set active_page = active_page|default('home') -%}

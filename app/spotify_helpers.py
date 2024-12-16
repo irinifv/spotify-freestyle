@@ -88,3 +88,50 @@ class SpotifyAPI:
             return response.json().get("items", [])
         else:
             raise Exception("Error fetching albums:", response.json())
+
+#fetches all tracks from an album
+    def get_album_tracks(self, album_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/albums/{album_id}/tracks"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("items", [])
+        else:
+            raise Exception("Error fetching album tracks:", response.json())
+
+#fetches an artist's top tracks
+    def get_top_tracks(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"market": "US"}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("tracks", [])
+        else:
+            raise Exception("Error fetching top tracks:", response.json())
+
+#fetches an artist's related artists
+    def get_related_artists(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/related-artists"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("artists", [])
+        else:
+            raise Exception("Error fetching related artists:", response.json())
+        
+#fetches an artist's albums
+    def get_artist_albums(self, artist_id):
+        self.ensure_access_token()
+        url = f"https://api.spotify.com/v1/artists/{artist_id}/albums"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        params = {"include_groups": "album", "limit": 50}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json().get("items", [])
+        else:
+            raise Exception("Error fetching artist albums:", response.json())
+

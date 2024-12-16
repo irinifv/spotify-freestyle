@@ -9,22 +9,38 @@
     <h1 class="text-center mt-4">Spotify Artist Data</h1>
 
     <!-- Search Form -->
-    <form method="POST" action="{{ url_for('source_routes.search') }}" class="mb-4">
+    <!-- <form method="POST" action="{{ url_for('search_routes.search') }}" class="mb-4">
         <div class="input-group">
             <input type="text" name="artist_name" class="form-control" placeholder="Enter artist name" required>
             <button class="btn btn-success" type="submit">Search</button>
         </div>
-    </form>
+    </form> -->
 
     {% if artist %}
     <!-- Artist Information -->
-    <div class="card mb-4">
+        <h2>Artist: {{ artist.name }}</h2>
+        <p>Popularity: {{ artist.popularity }}</p>
+        <p>Genres: {{ artist.genres | join(', ') }}</p>
+
+        <h3>Related Artists</h3>
+        <ul>
+            {% for related_artist in related_artists %}
+                <li>{{ related_artist.name }} (Popularity: {{ related_artist.popularity }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No artist found.</p>
+    {% endif %}
+
+    <a href="{{ url_for('search_routes.search') }}">Back to Search</a>
+
+    <!-- <div class="card mb-4">
         <div class="card-body">
             <h2 class="card-title">{{ artist.name }}</h2>
             <p><strong>Popularity:</strong> {{ artist.popularity }}</p>
             <p><strong>Followers:</strong> {{ artist.followers.total | number }}</p>
             <a href="{{ artist.external_urls.spotify }}" target="_blank" class="btn btn-success">View on Spotify</a>
         </div>
-    </div>
-
+    </div> -->
+</div>
 {% endblock %}
