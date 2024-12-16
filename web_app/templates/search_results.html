@@ -1,13 +1,15 @@
 {% extends "bootstrap_5_layout.html" %}
 
-{% set active_page = "search" %}
+{% set active_page = "search_results" %}
 
 {% block content %}
+
 <div class="container">
+
     <h1 class="text-center mt-4">Spotify Artist Data</h1>
 
     <!-- Search Form -->
-    <form method="POST" action="/search" class="mb-4">
+    <form method="POST" action="{{ url_for('source_routes.search') }}" class="mb-4">
         <div class="input-group">
             <input type="text" name="artist_name" class="form-control" placeholder="Enter artist name" required>
             <button class="btn btn-success" type="submit">Search</button>
@@ -25,27 +27,4 @@
         </div>
     </div>
 
-    <!-- Related Artists -->
-    <h3>Related Artists</h3>
-    <div class="row">
-        {% for related_artist in related_artists %}
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">{{ related_artist.name }}</h5>
-                    <p><strong>Popularity:</strong> {{ related_artist.popularity }}</p>
-                    <a href="{{ related_artist.external_urls.spotify }}" target="_blank" class="btn btn-outline-primary btn-sm">View on Spotify</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Plot -->
-    <h3>Popularity Chart</h3>
-    <div>
-        {{ fig | safe }}
-    </div>
-    {% endif %}
-</div>
 {% endblock %}

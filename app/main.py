@@ -1,14 +1,25 @@
+#main.py
+# contains the main code for the Flask web application
+# this file will be used to run the Flask web application
+# it imports the SpotifyAPI class from spotify_helpers.py and the visualization functions from visualization_helpers.py
+# it also defines the routes for the web application and renders the appropriate templates
+
 from flask import Flask, request, jsonify, render_template
 from app.spotify_helpers import SpotifyAPI
 from app.visualization_helpers import plot_artist_popularity_interactive, plot_album_timeline_interactive
 
+# Initialize Flask app
 app = Flask(__name__)
 spotify_api = SpotifyAPI()
 
+# Define routes
+
+# Home route
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("home.html")
 
+# Search route
 @app.route("/search", methods=["POST"])
 def search_artist():
     artist_name = request.form["artist_name"]

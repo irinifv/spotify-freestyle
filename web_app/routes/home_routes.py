@@ -65,3 +65,14 @@ def search():
 
     # Render the search page
     return render_template("search.html")
+
+# @home_routes.route("/search/results", methods=["GET", "POST"])
+# def search():
+#     """
+#     Handle search functionality.
+#     If POST: process search form input.
+#     If GET: render search page.
+#     """
+#     print("SEARCH route accessed.")
+
+#     return render_template("search_results.html")

@@ -13,6 +13,8 @@ A web app that allows users to search for Spotify artists, visualize popularity,
 - Visualize artist popularity.
 - Explore related artists and albums.
 
+
+## Usage
 Run the web app (then view in the browser at http://localhost:5000/):
 
 ```sh
@@ -34,7 +36,7 @@ Run tests:
 
 ```sh
 pytest
-
+```
 
 ## Old Code Bin
 ```
