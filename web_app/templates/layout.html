@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Artist Search</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+</head>
+<body>
+<!-- ERROR MESSAGING -->
+<!--
+        FLASH MESSAGING
+        https://flask.palletsprojects.com/en/1.1.x/patterns/flashing/
+        https://getbootstrap.com/docs/5.0/components/alerts/
+    -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+            <!--
+                BOOTSTRAP ALERTS
+                https://getbootstrap.com/docs/5.0/components/alerts/#dismissing
+            -->
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="margin-bottom:0;">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                {{ message }}
+            </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+<!-- NAVBAR -->
+<!--
+        SITE NAVIGATION & BOOTSTRAP NAV
+        https://jinja.palletsprojects.com/en/2.11.x/tricks/
+        https://getbootstrap.com/docs/5.0/components/navbar/
+-->
+{% set nav_links = [
+    ('/about', 'about', 'About'),
+    ('/hello', 'hello', 'Hello'),
+    ('/search', 'search', 'Search Artists'),
+    ('/search/results', 'search_results', 'Search Results'),
+    ('/albums', 'albums', 'Albums'),
+] -%}
+<!-- href, page_id, link_text -->
+<!-- path, unique id , title of link-->
+
+{% set active_page = active_page|default('home') -%}
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+                <!--
+                    ICONS / LOGO
+                    https://icons.getbootstrap.com/
+                -->
+                <i <i class="bi bi-spotify" style="font-size: 1.7rem; color: black;"></i>
+                &nbsp;
+                Spotify Search
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {% for href, page_id, link_text in nav_links %}
+                    {% set is_active = "active" if page_id == active_page else "" -%}
+                    <li class="nav-item">
+                        <a class="nav-link {{ is_active }}" href="{{href}}">{{link_text}}</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+
+            <!-- <div class="navbar-nav">
+                <a class="nav-item nav-link" href="{{ url_for('search_routes.search_form') }}">Search Artists</a>
+            </div> -->
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</body>
+</html>
