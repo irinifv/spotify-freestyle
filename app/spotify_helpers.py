@@ -3,6 +3,10 @@ import base64
 import os
 import time
 
+class SpotifyAPIError(Exception):
+    pass
+
+
 class SpotifyAPI:
     def __init__(self):
         self.client_id = os.getenv("SPOTIFY_CLIENT_ID")
@@ -37,40 +41,36 @@ class SpotifyAPI:
 
     def search_artist(self, artist_name):
         """Search for an artist by name."""
-        token = self.get_access_token()
-        url = "https://api.spotify.com/v1/search"
-        headers = {"Authorization": f"Bearer {token}"}
-        params = {"q": artist_name, "type": "artist", "limit": 1}
+        try:
+            token = self.get_access_token()
+            url = "https://api.spotify.com/v1/search"
+            headers = {"Authorization": f"Bearer {token}"}
+            params = {"q": artist_name, "type": "artist", "limit": 1}
+            
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response_data = response.json()
 
-        response = requests.get(url, headers=headers, params=params)
+            # Single set of debug logs
+            print("API Request URL:", response.url)
+            print("Response Status:", response.status_code)
+            print("Response Data:", response_data)
 
-        # Debugging Logs
-        print("API Request URL:", response.url)
-        print("Request Headers:", headers)
-        print("Response Status Code:", response.status_code)
-        print("Response JSON:", response.json())
-
-        response_data = response.json()
-
-        # Debugging Logs
-        print("API Request URL:", response.url)
-        print("API Response:", response_data)
-
-        if response.status_code == 200:
-            artists = response_data.get("artists", {}).get("items", [])
-            if artists:
-                artist = artists[0]
-                return {
-                    "name": artist.get("name"),
-                    "genres": artist.get("genres", []),
-                    "popularity": artist.get("popularity"),
-                    "external_urls": artist.get("external_urls", {}).get("spotify", ""),
-                }
-            else:
+            if response.status_code == 200:
+                artists = response_data.get("artists", {}).get("items", [])
+                if artists:
+                    artist = artists[0]
+                    return {
+                        "name": artist.get("name"),
+                        "genres": artist.get("genres", []),
+                        "popularity": artist.get("popularity"),
+                        "external_urls": artist.get("external_urls", {}).get("spotify", ""),
+                    }
                 print("No artists found in API response for query:", artist_name)
                 return None
-        else:
+                
             print("API Error Response:", response_data)
-            raise Exception(f"Failed to search for artist: {response_data}")
-
-        return None
+            raise SpotifyAPIError(f"Failed to search for artist: {response_data}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            return None

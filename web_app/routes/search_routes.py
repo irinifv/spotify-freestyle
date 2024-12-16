@@ -1,4 +1,5 @@
-from flask import Flask, Blueprint, request, render_template, redirect, flash, url_for
+from flask import Flask, Blueprint, request, render_template, redirect, flash, url_for, current_app
+import flask
 from app.spotify_helpers import SpotifyAPI
 
 # Initialize Flask Blueprint for routes
@@ -20,6 +21,8 @@ def search():
         if not search_query:
             flash("Please enter an artist name to search!", "danger")
             return redirect(url_for("search_routes.search"))
+        
+        spotify_api = current_app.config["SPOTIFY_API"]
 
         try:
             print(f"User query: {search_query}")
