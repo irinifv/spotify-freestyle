@@ -40,14 +40,13 @@
     ('/about', 'about', 'About'),
     ('/hello', 'hello', 'Hello'),
     ('/search', 'search', 'Search Artists'),
-    ('/search/results', 'search_results', 'Search Results'),
     ('/albums', 'albums', 'Albums'),
 ] -%}
 <!-- href, page_id, link_text -->
 <!-- path, unique id , title of link-->
 
 {% set active_page = active_page|default('home') -%}
-<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+<nav class="navbar navbar-expand-lg navbar-light bg-success">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
                 <!--
@@ -56,7 +55,7 @@
                 -->
                 <i <i class="bi bi-spotify" style="font-size: 1.7rem; color: black;"></i>
                 &nbsp;
-                Spotify Search
+                Spotify Search App
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">

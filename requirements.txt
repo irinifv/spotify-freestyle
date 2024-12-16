@@ -3,6 +3,12 @@ requests
 python-dotenv
 plotly
 pytest
+pandas
+numpy
+spotipy
+base64
+os
+time
 
 certifi==2024.8.30
 charset-normalizer==3.4.0
@@ -16,6 +22,5 @@ python-dotenv==1.0.1
 requests==2.32.3
 tenacity==9.0.0
 urllib3==2.2.3
-pandas
-numpy
-spotipy
+
+
