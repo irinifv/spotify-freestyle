@@ -64,6 +64,12 @@ class SpotifyAPI:
                         "genres": artist.get("genres", []),
                         "popularity": artist.get("popularity"),
                         "external_urls": artist.get("external_urls", {}).get("spotify", ""),
+                        "followers": artist.get("followers", {}).get("total", 0),
+                        "images": artist.get("images", []),
+                        "id": artist.get("id"),
+                        "uri": artist.get("uri"),
+                        
+
                     }
                 print("No artists found in API response for query:", artist_name)
                 return None
@@ -74,3 +80,61 @@ class SpotifyAPI:
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
             return None
+
+def get_artist_top_tracks(artist_id, access_token, market='US'):
+    """
+    Fetch top tracks for a given artist from Spotify API
+    Returns formatted track data for display in tracks.html
+    """
+    url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    params = {
+        "market": market
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response_data = response.json()
+        
+        # Debug logging
+        print("API Request URL:", response.url)
+        print("Response Status:", response.status_code)
+        print("Response Data:", response_data)
+        
+        if response.status_code == 200:
+            tracks = response_data.get("tracks", [])
+            formatted_tracks = []
+            
+            for track in tracks:
+                track_data = {
+                    "name": track.get("name"),
+                    "id": track.get("id"),
+                    "duration_ms": track.get("duration_ms"),
+                    "popularity": track.get("popularity"),
+                    "preview_url": track.get("preview_url"),
+                    "external_url": track.get("external_urls", {}).get("spotify"),
+                    "uri": track.get("uri"),
+                    "album": {
+                        "name": track.get("album", {}).get("name"),
+                        "images": track.get("album", {}).get("images", []),
+                        "release_date": track.get("album", {}).get("release_date")
+                    },
+                    "artists": [{
+                        "name": artist.get("name"),
+                        "id": artist.get("id")
+                    } for artist in track.get("artists", [])]
+                }
+                formatted_tracks.append(track_data)
+            
+            return formatted_tracks
+            
+        print("API Error Response:", response_data)
+        raise SpotifyAPIError(f"Failed to get artist's top tracks: {response_data}")
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {str(e)}")
+        raise SpotifyAPIError(f"Network error while getting top tracks: {str(e)}")

@@ -1,15 +1,9 @@
-{% extends "bootstrap_5_layout.html" %}
-
-{% set active_page = "hello" %}
+{% extends "layout.html" %}
 
 {% block content %}
-
-    <h1>{{ message }}</h1>
-
-    <p>This is a paragraph on the "hello" page.</p>
-
-    <p>{{ x }}</p>
-    
-    <p>{{ y }}</p>
-    
+<div class="jumbotron">
+    <h1 class="display-4">About</h1>
+    <p class="lead">{{ description }}</p>
+    <hr class="my-4">
+</div>
 {% endblock %}
