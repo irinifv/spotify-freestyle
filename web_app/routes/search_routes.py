@@ -1,81 +1,72 @@
-from flask import Blueprint, request, render_template, redirect, flash, url_for
-
+from flask import Blueprint, request, render_template, redirect, flash, url_for, current_app
 from app.spotify_helpers import SpotifyAPI
 
+# Initialize Flask Blueprint for routes
 search_routes = Blueprint("search_routes", __name__)
 
-spotify_api = SpotifyAPI()
+@search_routes.route("/")
+def home():
+    """Render the homepage with a link to the search functionality."""
+    return render_template("home.html", description="Welcome to the Spotify Artist Search App!")
 
-#search for an artist by name
-@search_routes.route("/search", methods=["GET", "POST"])
-def search():
-    """
-    Handle search functionality.
-    If POST: process search form input.
-    If GET: render search page.
-    """
-    print("SEARCH route accessed.")
-
-    if request.method == "POST":
-        # Extract search query from form
-        search_query = request.form.get("query")
-        print("SEARCH QUERY:", search_query)
-
-        if not search_query:
-            # Redirect back to the search page if query is missing
-            flash("Search query cannot be empty!", "danger")
-            return redirect(url_for("search_routes.search"))
-
-        try:
-            artist = spotify_api.search_artist(search_query)
-            if not artist:
-                flash("Artist not found!", "warning")
-                return redirect(url_for("search_routes.search"))
-
-            top_tracks = spotify_api.get_top_tracks(artist["id"])
-            related_artists = spotify_api.get_related_artists(artist["id"])
-
-            return render_template(
-                "search_results.html",
-                artist=artist,
-                top_tracks=top_tracks,
-                related_artists=related_artists
-            )
-        except Exception as e:
-            flash(f"An error occurred: {str(e)}", "danger")
-            return redirect(url_for("search_routes.search"))
-
+@search_routes.route("/search/form")
+def search_form():
+    """Display the search form page"""
     return render_template("search.html")
 
+@search_routes.route("/search/results", methods=["GET", "POST"])
+def search_results():
+    """Handle the search results page with both GET and POST methods"""
+    
+    if request.method == "POST":
+        # For data sent via POST request, form inputs are in request.form
+        search_query = request.form.get("query")
+    else:
+        # For data sent via GET request, url params are in request.args
+        search_query = request.args.get("query")
 
-#artist route
-@search_routes.route("/artists/<artist_id>", methods=["POST", "GET"])
-def artist(artist_id):
-    """
-    Handle the artist page.
-    """
-    print("ARTIST route accessed.")
+    if not search_query:
+        flash("Please enter an artist name to search!", "danger")
+        return redirect(url_for("search_routes.search_form"))
+    
+    spotify_api = current_app.config["SPOTIFY_API"]
 
-    artist = spotify_api.search_artist(artist_id)
-    if not artist:
-        flash("Artist not found!", "warning")
-        return redirect(url_for("search_routes.search"))
+    try:
+        print(f"User query: {search_query}")
+        artist_data = spotify_api.search_artist(search_query)
 
-    related_artists = spotify_api.get_related_artists(artist_id)
-    return render_template("artist.html", artist=artist, related_artists=related_artists)
+        # Debugging: Log the artist data
+        print("Artist Data from SpotifyAPI:", artist_data)
 
+        if not artist_data:
+            flash("No results found for the artist!", "warning")
+            return redirect(url_for("search_routes.search_form"))
 
-@search_routes.route("/albums/<artist_id>")
-def albums(artist_id):
-    """
-    Handle the albums page.
-    """
-    print("ALBUMS route accessed.")
+        return render_template("search_results.html", artist=artist_data)
 
-    artist = spotify_api.search_artist_by_id(artist_id)
-    if not artist:
-        flash("Artist not found!", "warning")
-        return redirect(url_for("search_routes.search"))
+    except Exception as e:
+        print(f"Error occurred during Spotify API call for query '{search_query}': {e}")
+        flash("An error occurred while processing your request. Please try again.", "danger")
+        return redirect(url_for("search_routes.search_form"))
 
-    albums = spotify_api.get_artist_albums(artist_id)
-    return render_template("albums.html", artist=artist, albums=albums)
+# API Routes
+@search_routes.route("/api/search.json")
+def search_api():
+    """JSON API endpoint for artist search"""
+    search_query = request.args.get("query")
+    
+    if not search_query:
+        return {"message": "Please provide a search query"}, 400
+    
+    try:
+        spotify_api = current_app.config["SPOTIFY_API"]
+        artist_data = spotify_api.search_artist(search_query)
+        
+        if not artist_data:
+            return {"message": "No results found"}, 404
+            
+        return {"artist": artist_data}
+        
+    except Exception as e:
+        print(f"API Error: {str(e)}")
+        return {"message": "An error occurred while processing your request"}, 500

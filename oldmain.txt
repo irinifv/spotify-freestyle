@@ -42,9 +42,7 @@ sp = Spotify(auth_manager=sp_oauth)
 
 spotify_api = SpotifyAPI()
 
-# Define routes
 
-# Home route
 @app.route("/")
 def home():
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
@@ -53,24 +51,28 @@ def home():
     return redirect(url_for("get_playlists"))
 
 
-# Search route
-@app.route("/search", methods=["POST"])
-def search_artist():
-    artist_name = request.form["artist_name"]
-    artist = spotify_api.search_artist(artist_name)
+@app.route("/callback")
+def callback():
+    token_info = sp_oauth.get_access_token(request.args["code"])
+    return redirect(url_for("get_playlists"))
 
-    if not artist:
-        return render_template("spotify_data.html", artist=None)
+@app.route('/get_playlists')
+def get_playlists():
+    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
+        auth_url = sp_oauth.get_authorize_url()
+        return redirect(auth_url)
+    
+    playlists = sp.current_user_playlists()
 
-    related_artists = spotify_api.get_related_artists(artist["id"])
-    fig = plot_artist_popularity_interactive(artist["name"], artist["popularity"], related_artists)
+    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
+    # playlists_html = '<br>'.join([f'<a href="{url}">{name}</a>' for name, url in playlists_info])
+    playlists_html = '<br>'.join([f'{name}: {url}' for name, url in playlists_info])
 
-    return render_template(
-        "spotify_data.html",
-        artist=artist,
-        related_artists=related_artists,
-        fig=fig.to_html()
-    )
+    return playlists_html
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # return render_template("playlists.html", playlists=playlists)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for("home"))

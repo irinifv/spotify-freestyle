@@ -1,53 +1,12 @@
-{% extends "bootstrap_5_layout.html" %}
-
-{% set active_page = "search" %}
+{% extends "layout.html" %}
 
 {% block content %}
-<div class="container">
-    <h1 class="text-center mt-4">Spotify Artist Data</h1>
-
-    <!-- Search Form -->
-    <form method="POST" action="/search/results" class="mb-4">
-        <div class="input-group">
-            <!-- input artist name -->
-            <input type="text" name="artist_name" class="form-control" placeholder="Enter artist name" required>
-            <!-- search button -->
-            <button class="btn btn-success" type="submit">Search</button>
-        </div>
-    </form>
-
-    {% if artist %}
-    <!-- Artist Information -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2 class="card-title">{{ artist.name }}</h2>
-            <p><strong>Popularity:</strong> {{ artist.popularity }}</p>
-            <p><strong>Followers:</strong> {{ artist.followers.total | number }}</p>
-            <a href="{{ artist.external_urls.spotify }}" target="_blank" class="btn btn-success">View on Spotify</a>
-        </div>
+<h2>Search for an Artist</h2>
+<form action="{{ url_for('search_routes.search_results') }}" method="POST">
+    <div class="form-group">
+        <label for="query">Artist Name:</label>
+        <input type="text" name="query" id="query" class="form-control" required>
     </div>
-
-    <!-- Related Artists -->
-    <h3>Related Artists</h3>
-    <div class="row">
-        {% for related_artist in related_artists %}
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">{{ related_artist.name }}</h5>
-                    <p><strong>Popularity:</strong> {{ related_artist.popularity }}</p>
-                    <a href="{{ related_artist.external_urls.spotify }}" target="_blank" class="btn btn-outline-primary btn-sm">View on Spotify</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Plot -->
-    <h3>Popularity Chart</h3>
-    <div>
-        {{ fig | safe }}
-    </div>
-    {% endif %}
-</div>
+    <button type="submit" class="btn btn-success">Search</button>
+</form>
 {% endblock %}
